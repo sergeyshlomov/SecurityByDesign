@@ -1,64 +1,60 @@
-# Sergey Shlomov — cybersecurity & technology advisory
+# SecurityByDesign — Sergey Shlomov
 
-A responsive profile and advisory website in English, Russian and Hebrew. React 19, Vite 6, locally served fonts, a cinematic operations-room illustration, interactive service hotspots, a photo-aligned animated pager LCD, softly animated monitor maps, a workstation/lab section and educational security scenarios.
+Responsive English, Russian and Hebrew (RTL) cybersecurity and IT leadership website. Original portrait, pager, laboratory, colors and service sections retained. Five physical equipment artifacts open business-risk scenarios, consequences and recovery measures. The pager scrolls and photographed maps pulse; an explicit pause control works on every device.
 
-## Development
+Repository: https://github.com/sergeyshlomov/SecurityByDesign
 
-Use Node.js 22 or newer and npm. The current environment has Node.js 24.
+Website: https://sergeyshlomov.github.io/SecurityByDesign/
 
-```bash
-cd /workspace/havivian
-npm ci
-npm run dev -- --port 3000
-```
+## Develop and verify
 
-## Production and verification
+Use Node.js 22+ (current: Node 24), npm and Python 3 with Pillow. Browser checks use /usr/bin/chromium or CHROMIUM_PATH.
 
 ```bash
+cd /workspace/SecurityByDesign
+npm ci --no-audit --no-fund --cache /workspace/.npm-cache
 npm run build
+npm run test:api
+npm run worker:check
 npm run test:smoke
 ```
 
-The smoke test starts its own production preview, checks all three languages at 1440, 768, 390 and 320 pixels, verifies interactions, keyboard navigation, language persistence, email preparation, phone and email links, and checks WCAG A/AA rules with axe. It uses `/usr/bin/chromium`; set `CHROMIUM_PATH` for a different installed browser. Local test screenshots are written to `.local/` and are ignored by Git. To test an already running server, set `TEST_BASE_URL`.
+`npm start` serves production files and the actual contact API on loopback port 8787. Set PORT for another available port. `/health` reports process readiness and mail configuration separately. For hot reload, run `npm run dev:api` in one persistent session and `npm run dev -- --port 3000` in another. Vite proxies contact requests to port 8787. Do not stop unrelated processes or create worktrees for this isolated cloud task.
 
-Deploy the generated `dist/` directory to any static web host. No backend, application secrets or database are required. The deployment state is recorded under “Hosting and exports”; do not infer a live site from build or branch-upload success.
+Smoke tests check 12 language/viewport combinations (1440, 768, 390, 320px), internal links, three service dialogs, five attack dialogs, pager briefing, tabs, mobile navigation, keyboard access, focus restoration and WCAG A/AA rules. They compare rendered pixels of the pager and map a second apart on desktop/tablet/mobile, including reduced-motion preferences, and verify pause/resume. Screenshots are saved in ignored .local/.
 
-## Content
+Contact integration tests exercise the production HTTP handler with an explicitly simulated mail provider: acceptance, rejection, rate limiting and missing configuration in all languages. They do **not** prove real email delivery. API tests cover validation, size limits, origin restrictions, fixed recipient, reply-to handling and provider failure. Worker dry-run validates Cloudflare packaging and bindings without deploying.
 
-All translated content is in `src/content.js`. Layout and interactions are in `src/main.jsx`; responsive styling is in `src/styles.css`.
+## Server email: live activation requires credentials
 
-- Profile details were taken from the two supplied 2026 CV documents. The more recent cybersecurity CV supplies the 2026 Ministry of Finance / SIGMA role and the end date for ICL.
-- The user confirmed the current 2026–present Ministry of Finance / SIGMA role and the presentation of MBA and Technion CIO programs without disputed dates. No claim is made about graduation status beyond the supplied CVs.
-- Company names describe employment experience, not endorsements or consulting clients.
-- Mamram / IDF experience is presented as supplied. There is no claim of Unit 8200 service, intelligence-agency affiliation or current government endorsement.
-- The hero is an AI-generated illustration, not a photograph of Sergey. Its source image is retained outside the repository at `/workspace/generated_images/exec-be78ae02-18e8-4a1d-ae4c-9906006391ae.png`; the optimized web asset is in `public/operations-room.webp`.
-- Threat scenarios are educational illustrations, not live events or threat statistics. Career performance figures are self-reported in the CVs.
-- The contact form validates input and shows a draft, then lets the visitor open it in an email application using a `mailto:` link. It does not transmit or store submissions; a user completes sending in their email application. A visible draft and copy option provide a fallback.
-- No analytics, advertising scripts or third-party font requests are used. Only the selected language is persisted in browser local storage. `?lang=en`, `?lang=ru` and `?lang=he` override the saved choice.
-- Phone: `+972 54 760 7213`. Email: `shlomovs@gmail.com`. The CVs do not provide a LinkedIn URL, so no speculative profile link is added.
+GitHub Pages cannot run a mail server. The form uses a server endpoint and never opens a desktop email application. `public/site-config.json` selects that endpoint. Its initial null value shows that sending is unavailable; it never reports success.
 
-Each cloud task is already isolated. Use this checkout rather than creating a worktree unless specifically requested.
+The server sends only to **shlomovs@gmail.com**, uses the validated visitor address as reply_to, and delivers through Resend. Cloudflare rate limiting permits five requests/minute/IP. Clients cannot choose the recipient or subject. Application code logs no message contents or provider credentials.
 
-## Hosting and exports
+1. Use Sergey’s Cloudflare and Resend accounts. Register/verify Resend with shlomovs@gmail.com when using the initial onboarding@resend.dev sender, which can deliver only to the account owner. For a custom sender, verify a domain and edit MAIL_FROM in wrangler.jsonc.
+2. Add CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and RESEND_API_KEY in secure environment settings. The Cloudflare token needs Workers Scripts edit and account access required by Wrangler. Never place secrets in source or chat.
+3. Run `npm run deploy:worker`. It stops before deployment when bindings are missing, deploys the verified Worker, supplies the Resend secret through stdin, checks health and records the endpoint in public/site-config.json. Local Wrangler state stays under ignored .local/.
+4. Build and verify the configured frontend, then publish. The default smoke test intentionally expects an unconfigured candidate; use a dedicated live-mail check for a configured deployment.
+5. Send an authorized test enquiry to Sergey. Verify provider acceptance and a Resend delivery event or inbox arrival before claiming delivery. An accepted request alone is not proof of arrival.
 
-The Vite build uses relative asset paths so it works both at a domain root and below `/havivian/`.
+The Node server is an alternative for a host supporting Node. Supply RESEND_API_KEY, MAIL_FROM and exact comma-separated ALLOWED_ORIGINS securely. Use the host’s HTTPS reverse proxy. Node rate limits are process-local; use shared rate limiting when scaling.
 
-```bash
-npm run export
-```
+## Deploy and export
 
-This creates `.local/Sergey-Shlomov.html` (all scripts, fonts and images embedded in one file) and `.local/sergey-shlomov-site.zip` (the static site for a host).
+Project moved from havivian to SecurityByDesign; old repository preserved. Source belongs on main, validated static build on gh-pages.
 
-`npm run deploy:pages` uploads the current `dist/` build to the origin `gh-pages` branch using the existing Git authentication, an isolated temporary index and an ordinary non-force push. It preserves the source checkout and any prior publication history. GitHub Pages must also be enabled with branch `gh-pages` and folder `/` in repository Settings → Pages, or through an authorized GitHub API call. A branch upload alone does not prove the website is live. The expected project URL is `https://sergeyshlomov.github.io/havivian/`; verify an HTTP 200 response and the actual page before reporting publication.
+`npm run deploy:pages` uploads existing dist/ with an ordinary non-force push; it does not silently rebuild. Enable GitHub Pages from gh-pages, folder /. Complete local checks before publishing and verify HTTP, TLS and SHA-256 equality of public files afterwards.
 
-The runtime initially blocked `api.github.com` and `sergeyshlomov.github.io` at the network proxy (CONNECT 403). Both hosts were added to the environment's network draft; saving a draft does not apply it to the runtime. Existing `GH_TOKEN` presence does not by itself prove GitHub API scope or Pages administration permission.
+Direct public Chromium access may be blocked by the environment proxy certificate. Do not disable TLS verification or change trust stores. A copy downloaded with verified TLS can be tested locally; record that distinction.
 
-The lab scene is an AI-generated photorealistic illustration, not a claim of facility ownership. Original image: `/workspace/generated_images/exec-68efa829-982f-41c8-93d3-0321aa736118.png`.
+`npm run export` creates an illustrative standalone HTML and static ZIP in .local/. Embedded visuals work independently; email still requires a configured server and allowed origin. An offline file is not a working mail service.
 
-## Verified publication — 7 October 2026
+## Profile and content
 
-Live website: https://sergeyshlomov.github.io/havivian/
+Facts come from the two supplied 2026 CVs. User confirmed Ministry of Finance / SIGMA, 2026–present, and education programs without disputed dates. Employers are employment history, not endorsements. IDF/Mamram computing/software background is presented as supplied; do not invent Unit 8200 service or current intelligence affiliation.
 
-The source was pushed to `main` and the production build to `gh-pages`. The live HTML, JavaScript, stylesheet, fonts and both images (18 files) all returned HTTP 200 with TLS verification enabled and SHA-256 hashes identical to the locally tested build. The 12 language/viewport combinations, pager ticker, screen animation, pause/resume, laboratory tabs, contact draft and accessibility checks passed locally.
+People, room, lab and equipment are photorealistic AI illustrations, not Sergey’s photographs or claims of facility ownership. Five cases are representative educational scenarios, not invented personal client projects or a universal statistical ranking. See [content review](docs/content-review.md).
 
-A direct public-browser check was blocked because Chromium did not trust the environment's proxy CA. Automatic approval review rejected adding that CA to Chromium's persistent trust store. No certificate verification was disabled and no trust-store change was made. Publication was instead verified with certificate-validating curl downloads and exact file comparisons.
+Translations: src/content.js; professional Russian/Hebrew copy and form messages: src/localization.js; cases and citations: src/attacks.js. Pager warning remains English as requested.
+
+Contact: +972 54 760 7213, shlomovs@gmail.com. No LinkedIn URL supplied. No advertising, analytics or remote fonts. Language preference is local; ?lang=en, ?lang=ru, ?lang=he override it.

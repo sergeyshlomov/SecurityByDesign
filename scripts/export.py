@@ -28,7 +28,7 @@ def inline_font(match):
     return 'url(' + data_uri(path) + ')'
 
 css = re.sub(r'url\(([^)]+)\)', inline_font, css_path.read_text())
-for image in ['operations-room.webp', 'security-lab.webp']:
+for image in ['operations-room.webp', 'security-lab.webp', 'attack-equipment.png']:
     relative = './' + image
     assert relative in js, f'Missing bundled image reference: {relative}'
     js = js.replace(relative, data_uri(dist / image))

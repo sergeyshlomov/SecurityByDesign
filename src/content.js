@@ -1,3 +1,5 @@
+import { attackContent } from './attacks.js';
+import { editorial } from './localization.js';
 export const content = {
   en: {
     name: 'Sergey Shlomov', nav: ['Expertise', 'Experience', 'About', 'Contact'], talk: 'Let’s talk', menu: 'Open menu', close: 'Close',
@@ -70,3 +72,5 @@ const sceneContent = {
   }
 };
 for (const lang of Object.keys(sceneContent)) Object.assign(content[lang], sceneContent[lang]);
+
+for (const lang of Object.keys(content)) Object.assign(content[lang], attackContent[lang], editorial[lang]);
