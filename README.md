@@ -54,3 +54,11 @@ This creates `.local/Sergey-Shlomov.html` (all scripts, fonts and images embedde
 The runtime initially blocked `api.github.com` and `sergeyshlomov.github.io` at the network proxy (CONNECT 403). Both hosts were added to the environment's network draft; saving a draft does not apply it to the runtime. Existing `GH_TOKEN` presence does not by itself prove GitHub API scope or Pages administration permission.
 
 The lab scene is an AI-generated photorealistic illustration, not a claim of facility ownership. Original image: `/workspace/generated_images/exec-68efa829-982f-41c8-93d3-0321aa736118.png`.
+
+## Verified publication — 7 October 2026
+
+Live website: https://sergeyshlomov.github.io/havivian/
+
+The source was pushed to `main` and the production build to `gh-pages`. The live HTML, JavaScript, stylesheet, fonts and both images (18 files) all returned HTTP 200 with TLS verification enabled and SHA-256 hashes identical to the locally tested build. The 12 language/viewport combinations, pager ticker, screen animation, pause/resume, laboratory tabs, contact draft and accessibility checks passed locally.
+
+A direct public-browser check was blocked because Chromium did not trust the environment's proxy CA. Automatic approval review rejected adding that CA to Chromium's persistent trust store. No certificate verification was disabled and no trust-store change was made. Publication was instead verified with certificate-validating curl downloads and exact file comparisons.
