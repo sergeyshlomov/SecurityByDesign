@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { Readable } from 'node:stream';
 import { handleContact } from '../server/contact.js';
 import { content } from '../src/content.js';
+import { organizations } from '../src/organizations.js';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 
@@ -43,6 +44,14 @@ try {
       assert.equal(await page.locator('html').getAttribute('dir'), lang === 'he' ? 'rtl' : 'ltr');
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false, `${lang}/${device} has horizontal overflow`);
       assert.equal(await page.locator('.hero-image').evaluate(el => el.complete && el.naturalWidth > 0), true);
+      const logos = page.locator('.organization-logo img');
+      assert.equal(await logos.count(), organizations.length);
+      for (const logo of await logos.all()) await logo.evaluate(el => el.decode());
+      assert.deepEqual(await logos.evaluateAll(els => els.map(el => el.alt)), organizations.map(org => org.name));
+      assert.equal(await logos.evaluateAll(els => els.every(el => {
+        const image = el.getBoundingClientRect(), tile = el.closest('li').getBoundingClientRect();
+        return el.complete && el.naturalWidth > 0 && image.width > 35 && image.height > 10 && image.left >= tile.left && image.right <= tile.right && image.top >= tile.top && image.bottom <= tile.bottom;
+      })), true, `${lang}/${device} has an unloaded or clipped logo`);
       assert.equal(await page.locator('.service-card').count(), 3);
       assert.equal(await page.locator('.timeline-item').count(), 5);
       assert.equal(await page.locator('.attack-artifact').count(),5);

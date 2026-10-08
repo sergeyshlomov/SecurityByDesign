@@ -2,6 +2,7 @@
 from pathlib import Path
 from zipfile import ZipFile, ZIP_DEFLATED
 import base64
+import json
 import mimetypes
 import re
 
@@ -32,6 +33,19 @@ for image in ['operations-room.webp', 'security-lab.webp', 'attack-equipment.png
     relative = './' + image
     assert relative in js, f'Missing bundled image reference: {relative}'
     js = js.replace(relative, data_uri(dist / image))
+
+for image in sorted((dist / 'logos').iterdir()):
+    if image.suffix not in {'.svg', '.png', '.jpg'}:
+        continue
+    relative = 'logos/' + image.name
+    assert relative in js, f'Missing bundled logo reference: {relative}'
+    js = js.replace(relative, data_uri(image))
+
+# Keep the attribution page reachable when the standalone HTML is used offline.
+credits_reference = '"./logos/credits.html"'
+assert credits_reference in js, 'Missing bundled image-credits link'
+credits = json.dumps((dist / 'logos/credits.html').read_text())
+js = js.replace(credits_reference, 'URL.createObjectURL(new Blob([' + credits + '],{type:"text/html"}))')
 
 html = html.replace(script.group(0), '<script type="module">' + js.replace('</script', '<\\/script') + '</script>')
 html = html.replace(stylesheet.group(0), '<style>' + css + '</style>')
