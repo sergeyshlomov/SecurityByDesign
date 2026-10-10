@@ -1,0 +1,45 @@
+name: Check contact delivery
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contact:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check the contact service and send one setup enquiry
+        shell: python
+        run: |
+          import json, os, urllib.request, urllib.error
+          origin = 'https://sergeyshlomov.github.io'
+          endpoint = 'https://formsubmit.co/ajax/shlomovs@gmail.com'
+          payload = {
+              'name': 'SecurityByDesign delivery check',
+              'email': 'shlomovs@gmail.com',
+              'message': 'Authorized setup check for the SecurityByDesign contact form. If activation is needed, please send the activation email to the website owner.',
+              '_subject': 'SecurityByDesign — contact form setup check',
+              '_template': 'table',
+              '_honey': '',
+              '_url': origin + '/SecurityByDesign/',
+          }
+          request = urllib.request.Request(endpoint, data=json.dumps(payload).encode(), headers={
+              'Content-Type': 'application/json', 'Accept': 'application/json',
+              'User-Agent': 'SecurityByDesign/1.0', 'Origin': origin,
+              'Referer': origin + '/SecurityByDesign/',
+          })
+          try:
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  status, raw = response.status, response.read()
+          except urllib.error.HTTPError as error:
+              status, raw = error.code, error.read()
+          try:
+              result = json.loads(raw)
+          except json.JSONDecodeError:
+              result = {'message': 'The service returned a non-JSON response.'}
+          evidence = {'status': status, 'success': result.get('success'), 'message': result.get('message')}
+          print(json.dumps(evidence))
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
+              summary.write('Contact service response:\n\n```json\n' + json.dumps(evidence, indent=2) + '\n```\n')
+          if status >= 400 or result.get('success') not in [True, 'true']:
+              raise SystemExit(1)
