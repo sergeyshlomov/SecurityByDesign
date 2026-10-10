@@ -30,7 +30,8 @@ jobs:
           evidence = {}
           for label, url in [('docs', 'https://formsubmit.co/'), ('privacy', 'https://formsubmit.co/privacy.pdf')]:
               try:
-                  with urllib.request.urlopen(url, timeout=30) as response:
+                  request = urllib.request.Request(url, headers={'User-Agent': 'SecurityByDesign/1.0', 'Accept': 'text/html,application/pdf'})
+                  with urllib.request.urlopen(request, timeout=30) as response:
                       evidence[label + '_status'] = response.status
                       if label == 'docs':
                           parser = Text(); parser.feed(response.read().decode('utf-8', errors='replace'))
@@ -46,6 +47,7 @@ jobs:
           request = urllib.request.Request('https://formsubmit.co/ajax/shlomovs@gmail.com', method='OPTIONS', headers={
               'Origin': 'https://sergeyshlomov.github.io', 'Access-Control-Request-Method': 'POST',
               'Access-Control-Request-Headers': 'content-type',
+              'User-Agent': 'SecurityByDesign/1.0', 'Referer': 'https://sergeyshlomov.github.io/SecurityByDesign/',
           })
           try:
               response = urllib.request.urlopen(request, timeout=30)
