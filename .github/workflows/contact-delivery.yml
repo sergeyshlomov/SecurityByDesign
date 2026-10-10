@@ -39,6 +39,7 @@ jobs:
               result = {'message': 'The service returned a non-JSON response.'}
           evidence = {'status': status, 'success': result.get('success'), 'message': result.get('message')}
           print(json.dumps(evidence))
+          print('::notice::Contact response ' + json.dumps(evidence).replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D'))
           with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
               summary.write('Contact service response:\n\n```json\n' + json.dumps(evidence, indent=2) + '\n```\n')
           if status >= 400 or result.get('success') not in [True, 'true']:
