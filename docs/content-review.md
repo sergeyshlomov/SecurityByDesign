@@ -1,4 +1,4 @@
-# Content and terminology review — 7 October 2026
+# Content and terminology review — updated 10 October 2026
 
 These ten Russian-language IT/security sites were downloaded and read, including page text and relevant terminology. This is a selected professional reference set, not a statistical ranking. Positive Technologies was attempted but unavailable and is not counted.
 
@@ -15,11 +15,33 @@ These ten Russian-language IT/security sites were downloaded and read, including
 | [itWeek](https://www.itweek.ru/) | Enterprise IT and digital transformation |
 | [ComNews](https://www.comnews.ru/) | Цифровая трансформация, информационная безопасность, интеграция |
 
-Hebrew was checked against Microsoft’s Israeli-language [cybersecurity introduction](https://www.microsoft.com/he-il/security/business/security-101/what-is-cybersecurity), [phishing](https://www.microsoft.com/he-il/security/business/security-101/what-is-phishing), [ransomware](https://www.microsoft.com/he-il/security/business/security-101/what-is-ransomware) and [MFA definition](https://www.microsoft.com/he-il/security/business/security-101/what-is-multifactor-authentication-mfa). Attempted government, ESET Israel and Israeli IT press pages were unavailable and are not counted as reviewed.
+## Hebrew rewrite — 10 October 2026
+
+The complete Hebrew copy was rewritten for Israeli business owners and IT leaders, rather than translated sentence by sentence. This includes services and dialogs, professional history, education, attack scenarios, infrastructure tabs, navigation, captions, form errors and privacy copy. The English pager message is intentionally preserved.
+
+The following Hebrew pages were downloaded and read. Microsoft provides terminology references; Israeli publications and Bezeq supply native enterprise IT usage. Search pages were used to find relevant articles and are not counted as articles. This is a selected reference set from four sources, not a claim to have reviewed every Israeli IT website.
+
+| Source read | Use in the rewrite |
+|---|---|
+| [Microsoft: cybersecurity](https://www.microsoft.com/he-il/security/business/security-101/what-is-cybersecurity) | אבטחת מידע, הגנת סייבר, המשכיות עסקית |
+| [Microsoft: phishing](https://www.microsoft.com/he-il/security/business/security-101/what-is-phishing) | דיוג, הגנת דואר, אימות עמיד לדיוג |
+| [Microsoft: ransomware](https://www.microsoft.com/he-il/security/business/security-101/what-is-ransomware) | כופרה, תגובה והתאוששות |
+| [Microsoft: MFA](https://www.microsoft.com/he-il/security/business/security-101/what-is-multifactor-authentication-mfa) | אימות רב־גורמי |
+| [Microsoft: Zero Trust](https://www.microsoft.com/he-il/security/business/zero-trust) | הרשאות לפי הצורך ובקרת גישה |
+| [Microsoft: business security](https://www.microsoft.com/he-il/security/business) | Enterprise security terminology |
+| [People & Computers](https://www.pc.co.il/) | Native Israeli IT headlines and professional titles |
+| [People & Computers: CIO and CISO responsibilities](https://www.pc.co.il/editorial/333467/) | מנהל מערכות מידע, מנהל אבטחת מידע and business responsibilities |
+| [People & Computers: OT safety and continuity](https://www.pc.co.il/%d7%a4%d7%95%d7%93%d7%a7%d7%90%d7%a1%d7%98-%d7%90%d7%a0%d7%a9%d7%99%d7%9d-%d7%95%d7%9e%d7%97%d7%a9%d7%91%d7%99%d7%9d-2/458882/) | תשתיות, בטיחות ורציפות תפקודית |
+| [Bezeq Business](https://www.bezeq.co.il/business/) | Natural business service and contact language |
+| [Bezeq: cyber protection](https://www.bezeq.co.il/business/internetanddata/cloud_services/bcyber-4d/) | אבטחת מידע והגנת סייבר |
+| [IsraelDefense: cloud architecture](https://www.israeldefense.co.il/node/71532) | Security architecture and practical business language |
+| [IsraelDefense: external dependencies and cyber risks](https://www.israeldefense.co.il/node/71533) | Supplier access and third-party risk wording |
+
+Government pages returned maintenance content; ESET, Bynet, Matrix, Aman, Malam, ONE and Ness were unavailable in this environment. They are not counted as reviewed. No article's unverified 2026 statistics or promotional guarantees were copied. Technical prose was edited independently; no external human language review is claimed.
 
 | Concept | Russian | Hebrew |
 |---|---|---|
-| Security by design | Безопасность в основе; безопасность на этапе проектирования | אבטחה מהיסוד; אבטחה כבר בשלב התכנון |
+| Security by design | Безопасность в основе; безопасность на этапе проектирования | אבטחה מהתכנון; אבטחה משלב התכנון |
 | Information security | Информационная безопасность | אבטחת מידע |
 | CIO | Управление IT | ניהול מערכות מידע |
 | CTO | Технологическое развитие | הובלה טכנולוגית |

@@ -104,3 +104,12 @@
 @media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}*,*:before,*:after{transition:none!important}.modal-backdrop{animation:none}.primary:hover,.hotspot:hover,.service-card:hover{transform:none}}
 
 .footer-links{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.footer-links a{color:inherit;text-decoration:none}.footer-links a:hover{text-decoration:underline}
+
+/* A clipped illustration must not scroll when browser focus moves to scene controls. */
+.hero{overflow:clip}
+[lang=he] .hero-bottom{letter-spacing:0}
+[lang=he] .hero-bottom>span{direction:rtl}
+[lang=he] .experience-stamp>div,[lang=he] .lab-photo-caption,[lang=he] .graphic-code{font-family:'Heebo Variable',sans-serif;letter-spacing:0;direction:rtl}
+[lang=he] .lab-photo-caption>span:last-child{margin-left:0;margin-inline-start:auto}
+.provider-privacy{display:inline-flex;align-items:center;gap:6px;margin-bottom:12px}
+@media(max-width:640px){.hero-location{margin-top:14px}}

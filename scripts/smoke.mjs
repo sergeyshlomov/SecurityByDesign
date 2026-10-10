@@ -109,6 +109,16 @@ try {
       // Exercise every navigation anchor, including footer and contact focus link.
       const internal=await page.locator('a[href^="#"]').count();
       for(let i=0;i<internal;i++){const link=page.locator('a[href^="#"]').nth(i);if(!await link.isVisible())continue;if(await link.evaluate(el=>el.classList.contains('skip-link')))await link.focus();const href=await link.getAttribute('href');await link.click();assert.equal(await page.locator(href).count(),1);assert.equal(await page.evaluate(()=>location.hash),href);}
+      const overlaps=await page.locator('.hero-location').evaluate(el=>{
+        const location=document.createRange();location.selectNodeContents(el);
+        const caption=document.createRange();caption.selectNodeContents(document.querySelector('.scene-caption'));
+        const a=location.getBoundingClientRect(),b=caption.getBoundingClientRect();
+        return a.left<b.right && a.right>b.left && a.top<b.bottom && a.bottom>b.top;
+      });
+      assert.equal(overlaps,false,`${lang}/${device} location and scene caption overlap`);
+      const finalHero=await page.locator('.hero-copy').boundingBox();
+      assert.ok(finalHero.x>=0 && finalHero.x+finalHero.width<=width,`${lang}/${device} hero text clipped after interaction`);
+      assert.equal(await page.locator('.hero').evaluate(el=>el.scrollLeft),0,`${lang}/${device} hero unexpectedly scrolled horizontally`);
       await page.screenshot({ path: `.local/${lang}-${device}.png`, fullPage: true });
       const accessibility = await new AxeBuilder({ page }).withTags(['wcag2a','wcag2aa','wcag21aa']).analyze();
       for (const violation of accessibility.violations) errors.push(`${lang}/${device}: ${violation.id}: ${violation.nodes.map(n => n.target.join(' ')).join(', ')}`);
@@ -130,7 +140,8 @@ try {
     await page.locator('[name="message"]').fill('TEST ONLY — please discuss an IT strategy engagement.');
     await page.locator('select').selectOption('1');
   }
-  // Production candidate has no provider credentials: it must honestly reject sending.
+  // Explicit missing-configuration fixture: never send live email from browser tests.
+  await page.route('**/site-config.json', route => route.fulfill({json:{contactEndpoint:null}}));
   await page.locator('.form-submit').click();
   assert.equal(await page.locator('[name="name"]').evaluate(el=>el.validity.valueMissing),true);
   await fillForm();await page.locator('.form-submit').click();
@@ -153,6 +164,33 @@ try {
     for(const mode of ['failed','rate','unconfigured']){fixtureMode=mode;await fillForm();await page.locator('.form-submit').click();await page.locator('.form-feedback.error').waitFor();assert.equal(await page.locator('.form-feedback.sent').count(),0);assert.ok(await page.locator('[name="message"]').inputValue());}
     fixtureMode='accepted';
   }
+  // FormSubmit returns HTTP 200 even when the recipient has not activated the form.
+  await page.unroute('**/site-config.json');
+  await page.route('**/site-config.json',route=>route.fulfill({json:{contactProvider:'formsubmit',contactEndpoint:'https://formsubmit.co/ajax/shlomovs@gmail.com'}}));
+  let serviceReply={status:200,json:{success:'true',message:'The form was submitted successfully.'}};
+  let submitted;
+  await page.route('https://formsubmit.co/ajax/shlomovs@gmail.com',async route=>{
+    submitted=route.request().postDataJSON();
+    if(serviceReply.networkError)return route.abort('failed');
+    return route.fulfill(serviceReply);
+  });
+  for(const lang of ['en','ru','he']){
+    await page.getByRole('button',{name:{en:'English',ru:'Русский',he:'עברית'}[lang],exact:true}).click();
+    await fillForm();await page.locator('.form-submit').click();await page.locator('.form-feedback.sent').waitFor();
+    assert.equal(await page.locator('[name="message"]').inputValue(),'');
+    assert.equal(submitted.topic,content[lang].interests[1]);assert.equal(submitted.language,lang);
+    assert.equal(submitted._url,'https://sergeyshlomov.github.io/SecurityByDesign/');assert.equal(submitted.email,'shlomovs@gmail.com');
+    const cases=[
+      [{status:200,json:{success:'false',message:"This form needs Activation. We've sent you an email containing an 'Activate Form' link. Just click it and your form will be actived!"}},'mailActivation'],
+      [{status:200,json:{success:'false',message:'Unable to submit form'}},'sendError'],
+      [{status:403,json:{success:'false'}},'sendError'],
+      [{status:429,json:{success:'false'}},'rateError'],
+      [{status:200,contentType:'text/html',body:'Unexpected service page'},'sendError'],
+      [{networkError:true},'sendError'],
+    ];
+    for(const [reply,copyKey] of cases){serviceReply=reply;await fillForm();await page.locator('.form-submit').click();await page.locator('.form-feedback.error').waitFor();assert.equal((await page.locator('.form-feedback.error').innerText()).trim(),content[lang][copyKey]);assert.equal(await page.locator('.form-feedback.sent').count(),0);assert.ok(await page.locator('[name="message"]').inputValue());}
+    serviceReply={status:200,json:{success:true,message:'The form was submitted successfully.'}};
+  }
   await page.getByRole('button',{name:'English',exact:true}).click();
   await page.locator('.footer-bottom button').click();
   await page.getByRole('dialog').waitFor();
@@ -164,7 +202,7 @@ try {
   await page.locator('.contact-method').first().click();assert.equal(await page.locator('[name="name"]').evaluate(el=>el===document.activeElement),true);
   for (const id of links.filter(h => h.startsWith('#'))) assert.equal(await page.locator(id).count(),1);
   await page.close();
-  console.log('PASS validation, missing configuration, multilingual HTTP API integration with test provider, delivery failure/rate limit, privacy, all navigation and contact links. Live email NOT tested: no credentials.');
+  console.log('PASS validation, missing configuration, multilingual HTTP API integration with test provider, delivery failure/rate limit, privacy, all navigation and contact links. FormSubmit success, activation, rejection, rate limit, non-JSON and network failures verified in all languages with explicit test doubles. These tests do not send or prove live email delivery.');
   for(const [device,width,height] of [['desktop',1440,1000],['tablet',768,1024],['mobile',390,844]]){
     const motionContext=await browser.newContext({viewport:{width,height},reducedMotion:'reduce'});
     const motionPage=await motionContext.newPage();await motionPage.goto(origin,{waitUntil:'networkidle'});

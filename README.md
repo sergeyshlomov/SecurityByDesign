@@ -19,25 +19,29 @@ npm run worker:check
 npm run test:smoke
 ```
 
-`npm start` serves production files and the actual contact API on loopback port 8787. Set PORT for another available port. `/health` reports process readiness and mail configuration separately. For hot reload, run `npm run dev:api` in one persistent session and `npm run dev -- --port 3000` in another. Vite proxies contact requests to port 8787. Do not stop unrelated processes or create worktrees for this isolated cloud task.
+`npm run dev -- --port 3000` provides hot reload with the static site’s FormSubmit configuration. Do not send live mail as part of routine development checks. For the optional owned backend, run `npm run dev:api` and `CONTACT_PROVIDER=worker npm run dev -- --port 3000` in separate sessions; Vite then serves `/api/contact` configuration and proxies it to 8787. `npm start` serves dist/ with this optional Node API on loopback 8787. Its `/health` reports backend readiness and mail configuration separately. Set PORT for another available port. Do not stop unrelated processes or create worktrees for this isolated cloud task.
 
 Smoke tests check 12 language/viewport combinations (1440, 768, 390, 320px), internal links, three service dialogs, five attack dialogs, pager briefing, tabs, mobile navigation, keyboard access, focus restoration and WCAG A/AA rules. They compare rendered pixels of the pager and map a second apart on desktop/tablet/mobile, including reduced-motion preferences, and verify pause/resume. Screenshots are saved in ignored .local/.
 
-Contact integration tests exercise the production HTTP handler with an explicitly simulated mail provider: acceptance, rejection, rate limiting and missing configuration in all languages. They do **not** prove real email delivery. API tests cover validation, size limits, origin restrictions, fixed recipient, reply-to handling and provider failure. Worker dry-run validates Cloudflare packaging and bindings without deploying.
+Contact integration tests exercise the production HTTP handler with an explicitly simulated mail provider: acceptance, rejection, rate limiting and missing configuration in all languages. FormSubmit browser fixtures additionally cover HTTP-200 activation/rejection, rate limits, non-JSON responses and network failures in all three languages. They do **not** prove real email delivery. API tests cover validation, size limits, origin restrictions, fixed recipient, reply-to handling and provider failure. Worker dry-run validates Cloudflare packaging and bindings without deploying.
 
-## Server email: live activation requires credentials
+## Contact email: free FormSubmit delivery
 
-GitHub Pages cannot run a mail server. The form uses a server endpoint and never opens a desktop email application. `public/site-config.json` selects that endpoint. Its initial null value shows that sending is unavailable; it never reports success.
+The published static site now uses [FormSubmit](https://formsubmit.co/) through its JSON AJAX endpoint. No Cloudflare account, API key, custom domain or desktop email app is needed for this integration. `public/site-config.json` fixes the provider and recipient endpoint to `https://formsubmit.co/ajax/shlomovs@gmail.com`. The form sends the visitor's name, email, topic, language and message; FormSubmit forwards it to Sergey and uses the visitor email for replies. The site's privacy dialog names FormSubmit and links its policy.
 
-The server sends only to **shlomovs@gmail.com**, uses the validated visitor address as reply_to, and delivers through Resend. Cloudflare rate limiting permits five requests/minute/IP. Clients cannot choose the recipient or subject. Application code logs no message contents or provider credentials.
+**Recipient verification is still pending as of the setup check on 10 October 2026.** The live service returned HTTP 200 with `success: "false"` and: “This form needs Activation. We've sent you an email containing an 'Activate Form' link. Just click it and your form will be actived!” The recipient must click **Activate Form** in that email once. This cannot be completed without access to the recipient's inbox. No mail delivery or inbox arrival is claimed while activation is pending.
 
-1. Use Sergey’s Cloudflare and Resend accounts. Register/verify Resend with shlomovs@gmail.com when using the initial onboarding@resend.dev sender, which can deliver only to the account owner. For a custom sender, verify a domain and set MAIL_FROM securely or in wrangler.jsonc.
-2. Add CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID and RESEND_API_KEY in secure environment settings. The Account ID is the 32-character hexadecimal value from the account dashboard, not an email, account name or zone ID. The Cloudflare token needs Workers Scripts edit and account access required by Wrangler. Never place secrets in source or chat. Proxy-backed API key placeholders must be used through the configured HTTPS routes; they are not raw local credentials.
-3. Use Node.js 24.5+ for deployment and run `npm run deploy:worker`. It checks the account ID and Cloudflare/Resend access before deployment, uses the pinned Wrangler CLI, supplies the Resend secret through stdin, checks health and records the endpoint in public/site-config.json only after readiness succeeds. MAIL_FROM from the environment overrides the initial sender. Node fetch uses the platform HTTPS proxy with TLS verification. Local Wrangler state stays under ignored .local/.
-4. Build and verify the configured frontend, then publish. The default smoke test intentionally expects an unconfigured candidate; use a dedicated live-mail check for a configured deployment.
-5. Run `node scripts/test-live-mail.mjs` to send one authorized, clearly identified test enquiry through the published endpoint. It checks the live configuration and CORS before sending. Verify a Resend delivery event or inbox arrival before claiming delivery. An accepted request alone is not proof of arrival. The API and pre-deployment tests run with `node --test tests/contact.test.mjs tests/mail-preflight.test.mjs` without sending email.
+`src/contact-client.js` distinguishes activation errors from accepted submissions, including FormSubmit's HTTP-200 failures. Errors retain the visitor's message and show translated feedback. The AJAX path stays on the site. The endpoint, notification subject and destination URL are fixed in code; visitor fields cannot set recipients, CC or subject. A hidden honeypot field is passed to the service. Provider anti-spam controls apply; the static website does not claim its own server-side IP rate limiting or CAPTCHA.
 
-The Node server is an alternative for a host supporting Node. Supply RESEND_API_KEY, MAIL_FROM and exact comma-separated ALLOWED_ORIGINS securely. Use the host’s HTTPS reverse proxy. Node rate limits are process-local; use shared rate limiting when scaling.
+The manual **Check contact delivery** GitHub Actions workflow validates official service documentation, the privacy link and CORS. With the explicit `submit_test` option it also sends one identified test to the site owner's address. These are live service checks, separate from browser fixtures. The CORS check passed from the site's origin with POST and Content-Type allowed. Setup checks and their sanitized responses are visible in GitHub check annotations. Browsers do not send live messages during smoke tests.
+
+After recipient activation, use that manual test or `node scripts/test-live-mail.mjs` to send one authorized test enquiry. Provider acceptance is distinct from inbox delivery; confirm arrival before claiming end-to-end delivery. This cloud environment may deny a new provider host until its saved network configuration is published. Do not disable TLS verification or bypass network controls.
+
+### Optional owned backend
+
+The Cloudflare Worker / Node + Resend implementation is retained for a later move to an owned backend. It is not required for the current static FormSubmit website. `npm run deploy:worker` checks CLOUDFLARE_ACCOUNT_ID and supported Cloudflare/Resend APIs before deployment. Use secure environment bindings for CLOUDFLARE_API_TOKEN and RESEND_API_KEY; never commit credentials. Proxy-backed placeholders are not raw API keys. `server/contact.js` sends only to shlomovs@gmail.com with a fixed subject, validates input and origin, and uses reply_to. Production Worker rate limits are five requests/minute/IP; Node limits are process-local. Configure MAIL_FROM and ALLOWED_ORIGINS securely for a Node host.
+
+The existing Cloudflare/Resend settings failed the previous preflight checks. Do not deploy this optional backend or report mail readiness merely because bindings exist.
 
 ## Deploy and export
 
@@ -47,7 +51,7 @@ Project moved from havivian to SecurityByDesign; old repository preserved. Sourc
 
 Direct public Chromium access may be blocked by the environment proxy certificate. Do not disable TLS verification or change trust stores. A copy downloaded with verified TLS can be tested locally; record that distinction.
 
-`npm run export` creates an illustrative standalone HTML and static ZIP in .local/. Embedded visuals work independently; email still requires a configured server and allowed origin. An offline file is not a working mail service.
+`npm run export` creates an illustrative standalone HTML and static ZIP in .local/. Embedded visuals work independently; email still requires a reachable, activated provider and an allowed origin. An offline file is not a working mail service.
 
 ## Profile and content
 
@@ -55,6 +59,6 @@ Facts come from the two supplied 2026 CVs. User confirmed Ministry of Finance / 
 
 People, room, lab and equipment are photorealistic AI illustrations, not Sergey’s photographs or claims of facility ownership. Five cases are representative educational scenarios, not invented personal client projects or a universal statistical ranking. See [content review](docs/content-review.md).
 
-Translations: src/content.js; professional Russian/Hebrew copy and form messages: src/localization.js; cases and citations: src/attacks.js. Pager warning remains English as requested.
+Translations: src/content.js; Russian editorial copy: src/localization.js; complete Hebrew copy: src/hebrew.js; interface captions: src/ui-copy.js; provider messages and privacy: src/mail-copy.js; cases and citations: src/attacks.js. Pager warning remains English as requested.
 
 Contact: +972 54 760 7213, shlomovs@gmail.com. No LinkedIn URL supplied. No advertising, analytics or remote fonts. Language preference is local; ?lang=en, ?lang=ru, ?lang=he override it.
