@@ -33,7 +33,7 @@ jobs:
                   with urllib.request.urlopen(url, timeout=30) as response:
                       evidence[label + '_status'] = response.status
                       if label == 'docs':
-                          parser = Text(); parser.feed(response.read().decode())
+                          parser = Text(); parser.feed(response.read().decode('utf-8', errors='replace'))
                           text = re.sub(r'\s+', ' ', ' '.join(parser.parts))
                           evidence['documentation'] = []
                           for phrase in ['Activate', 'AJAX', '_honey', '_captcha']:
@@ -41,15 +41,25 @@ jobs:
                               if match: evidence['documentation'].append(text[max(0,match.start()-80):match.end()+350])
               except urllib.error.HTTPError as error:
                   evidence[label + '_status'] = error.code
+              except Exception as error:
+                  evidence[label + '_error'] = type(error).__name__ + ': ' + str(error)[:180]
           request = urllib.request.Request('https://formsubmit.co/ajax/shlomovs@gmail.com', method='OPTIONS', headers={
               'Origin': 'https://sergeyshlomov.github.io', 'Access-Control-Request-Method': 'POST',
               'Access-Control-Request-Headers': 'content-type',
           })
-          with urllib.request.urlopen(request, timeout=30) as response:
-              evidence['cors_status'] = response.status
-              evidence['allow_origin'] = response.headers.get('Access-Control-Allow-Origin')
-              evidence['allow_methods'] = response.headers.get('Access-Control-Allow-Methods')
-              evidence['allow_headers'] = response.headers.get('Access-Control-Allow-Headers')
+          try:
+              response = urllib.request.urlopen(request, timeout=30)
+          except urllib.error.HTTPError as error:
+              response = error
+          except Exception as error:
+              response = None
+              evidence['cors_error'] = type(error).__name__ + ': ' + str(error)[:180]
+          if response:
+              with response:
+                  evidence['cors_status'] = response.status
+                  evidence['allow_origin'] = response.headers.get('Access-Control-Allow-Origin')
+                  evidence['allow_methods'] = response.headers.get('Access-Control-Allow-Methods')
+                  evidence['allow_headers'] = response.headers.get('Access-Control-Allow-Headers')
           print('::notice::Service checks ' + json.dumps(evidence).replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D'))
           if evidence.get('docs_status') != 200 or evidence.get('privacy_status') != 200:
               raise SystemExit(1)
